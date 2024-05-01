@@ -1,0 +1,61 @@
+trigger:
+- master
+
+pr:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+steps:
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  name: NugetRestore
+  inputs:
+    command: 'restore'
+    restoreSolution: '**/*.sln'
+    feedsToUse: 'select'
+    vstsFeed: 'feed-ref'
+        
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: '/p:Configuration=$(buildConfiguration) /p:Platform="$(buildPlatform)"'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Unit Tests'
+  inputs:
+    command: 'test'
+    projects: '**/*Tests.csproj'
+    arguments: '--no-build --configuration $(buildConfiguration) --collect "Code coverage"'
+    
+- task: PublishCodeCoverageResults@1
+  inputs:
+    codeCoverageTool: 'Cobertura'
+    summaryFileLocation: '**/coverage.cobertura.xml'
+    
+- task: DotNetCoreCLI@2
+  displayName: 'NugetPack'
+  condition: succeeded()
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/HttpClientService.csproj'
+    versioningScheme: 'off'
+    arguments: '--no-build --configuration $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'NugetPush'
+  condition: succeeded()
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: 'feed-ref'

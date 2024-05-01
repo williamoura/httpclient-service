@@ -1,0 +1,19 @@
+﻿using System.Net;
+using System.Net.Mime;
+using System.Text;
+
+namespace HttpClientService.UnitTests.Common.MessageHandlers
+{
+    public class SuccessMessageHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK);
+
+            response.RequestMessage = request;
+            response.Content = new StringContent("{\"field1\":\"value1\"}", Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            return Task.FromResult(response);
+        }
+    }
+}
