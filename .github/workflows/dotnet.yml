@@ -27,6 +27,6 @@ jobs:
     - name: Test
       run: dotnet test --no-restore --verbosity normal
     - name: Pack
-      run: dotnet pack --no-build --configuration Release --output nupkgs
+      run: dotnet pack --no-build --configuration Release -p:PackageId=WM.HttpClient.Service --output nupkgs
     - name: Publish NuGet Package
-      run: dotnet nuget push nupkgs/*.nupkg --source <NUGET_SOURCE_URL> --api-key ${{ secrets.NUGET_API_KEY }}
+      run: dotnet nuget push nupkgs/*.nupkg --source https://www.nuget.org --api-key ${{ secrets.NUGET_API_KEY }}
